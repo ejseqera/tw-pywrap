@@ -15,6 +15,10 @@ import time
 
 logger = logging.getLogger(__name__)
 
+# Tagging for code review on 06/07/2023
+# This script will launch pipelines in a workspace based on a YAML config file
+# Calls launch method in pipelines.py
+
 
 def log_and_continue(e):
     logger.error(e)
@@ -109,6 +113,8 @@ def main():
         # Get pipeline specific params to pass to launch command
         pipeline_params = utils.get_pipeline_params(pipeline_data, pipeline["name"])
 
+        # This could probably simplified to something like:
+        # handle_launch(tw_wrapper, **pipeline)
         handle_launch(
             tw_wrapper,
             pipeline["url"],

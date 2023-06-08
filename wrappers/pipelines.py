@@ -4,6 +4,11 @@ Python wrapper for tw pipelines command
 from .utils import tw_run
 from pathlib import Path
 
+# Tagging for code review on 06/07/2023
+# I recognize there is excessive use of *args and **kwargs in this file
+# Probably better to be explicit about the arguments being passed in than
+# to be implicit but the goal initially was to allow for flexibility
+
 
 class Pipelines:
     """

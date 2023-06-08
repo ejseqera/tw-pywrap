@@ -4,6 +4,11 @@ Python wrapper for tw pipelines command
 from .utils import tw_run
 from pathlib import Path
 
+# Tagging for code review on 06/07/2023
+# This entire script is very much undone and needs to be finished
+# I started modelling it out to contain mainly workspace/org setup methods
+# Can probably be split into multiple classes?
+
 
 class Workspace:
     """

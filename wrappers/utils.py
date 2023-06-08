@@ -7,7 +7,9 @@ import shlex
 from datetime import date
 import tempfile
 
-
+# Tagging for code review on 06/07/2023
+# This is the main command builder that wraps the tw command
+# and using subprocess.Popen() and returns the stdout
 def tw_run(cmd, *args, **kwargs):
     """
     Run a tw command with supplied commands
