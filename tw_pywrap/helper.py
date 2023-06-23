@@ -3,10 +3,12 @@ This file contains helper functions for the library.
 Including handling methods for each block in the YAML file, and parsing 
 methods for each block in the YAML file.
 """
+
+import json
 import yaml
+
 from tw_pywrap import tower
 from tw_pywrap import utils
-import json
 
 # TODO: rename these functions to be more descriptive
 
@@ -23,6 +25,11 @@ def parse_yaml_block(file_path, block_name):
     cmd_args_list = []
 
     # Iterate over each item in the block.
+    # If no commands supplied just run `tw <block_name>`
+    if block is None:
+        logging.warn(f"No arguments applied to {block_name}")
+        block = [{}]  # List of empty dict
+
     for item in block:
         cmd_args_list.append(parse_block(block_name, item))
 
@@ -198,6 +205,11 @@ def parse_launch_block(item):
 def handle_add_block(tw, block, args):
     method = getattr(tw, block)
     method("add", *args)
+
+
+def handle_info(tw, args):
+    method = getattr(tw, "info")
+    method(*args)
 
 
 def handle_teams(tw, args):

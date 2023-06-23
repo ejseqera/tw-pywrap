@@ -52,6 +52,7 @@ class BlockParser:
     def handle_block(self, block, args):
         # Handles a block of commands by calling the appropriate function.
         block_handler_map = {
+            "info": helper.handle_info,
             "teams": helper.handle_teams,
             "participants": helper.handle_participants,
             "compute-envs": helper.handle_compute_envs,
@@ -95,11 +96,12 @@ def main():
     # Returns a dict that maps block names to lists of command line arguments.
     cmd_args_dict = helper.parse_all_yaml(options.config, list(data.keys()))
 
-    for block, args_list in cmd_args_dict.items():
-        for args in args_list:
-            # Run the methods for each block
-            block_manager.handle_block(block, args)
-            time.sleep(3)
+    # Flatten commands to list of tuples
+    cmd_sets = [(block, arg) for block, args in cmd_args_dict.items() for arg in args]
+    for block, args in cmd_sets:
+        # Run the methods for each block
+        block_manager.handle_block(block, args)
+        time.sleep(3)
 
 
 if __name__ == "__main__":
