@@ -58,7 +58,7 @@ class Tower:
         process = subprocess.Popen(full_cmd, stdout=subprocess.PIPE, shell=True)
         stdout, _ = process.communicate()
         stdout = stdout.decode("utf-8").strip()
-
+        logging.info(stdout)
         return stdout
 
     # Allow any 'tw' subcommand to be called as a method.
