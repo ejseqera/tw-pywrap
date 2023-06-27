@@ -1,6 +1,6 @@
 # tw-pywrap
 
-`tw-pywrap` is a Python wrapper for the [Nextflow Tower CLI](https://github.com/seqeralabs/tower-cli). It can be leveraged to automate the creation of all of the entities in Nextflow Tower via a simple configuration file in YAML format:
+`tw-pywrap` is a Python wrapper for the [Nextflow Tower CLI](https://github.com/seqeralabs/tower-cli). It can be leveraged to automate the creation of all of the entities in Nextflow Tower via a simple configuration file in YAML format.
 
 The key features are:
 
@@ -77,7 +77,7 @@ You will need to have an account on Nextflow Tower (see [Plans and pricing](http
   2. Launch the pipeline with `tw-pywrap`:
 
       ```
-      tw-pywrap --config hello_world_config.yml
+      tw-pywrap hello_world_config.yml
       ```
 
   3. Login to Tower Cloud and check the [Runs page](https://tower.nf/orgs/community/workspaces/showcase/watch]) in the `community/showcase` for the pipeline you just launched!
@@ -100,7 +100,7 @@ You will need to have an account on Nextflow Tower (see [Plans and pricing](http
   2. Launch the pipeline with `tw-pywrap`:
 
       ```
-      tw-pywrap --config hello_world_config.yml
+      tw-pywrap hello_world_config.yml
       ```
 
   3. Login to your Tower Enterprise instance and check the Runs page in the appropriate Workspace for the pipeline you just launched!

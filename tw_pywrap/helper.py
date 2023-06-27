@@ -1,6 +1,6 @@
 """
 This file contains helper functions for the library.
-Including handling methods for each block in the YAML file, and parsing 
+Including handling methods for each block in the YAML file, and parsing
 methods for each block in the YAML file.
 """
 
@@ -190,6 +190,9 @@ def parse_launch_block(item):
     for key, value in item.items():
         if key == "pipeline" or key == "url":
             repo_args.extend([str(value)])
+        elif key == "params":
+            temp_file_name = utils.create_temp_yaml(value)
+            cmd_args.extend(["--params-file", temp_file_name])
         else:
             cmd_args.extend([f"--{key}", str(value)])
     cmd_args = repo_args + cmd_args
@@ -255,7 +258,7 @@ def handle_launch(tw, args):
 # Handle overwrite functionality
 
 
-def get_delete_identifier(block, yaml_key, key_value, target_key, tw_args):
+def get_delete_identifier(block, yaml_key, key_value, target_key, tw_args=None):
     """
     Special handler for resources that need to be deleted by another identifier.
     TODO: Remove when `--overwrite` is supported by the CLI
@@ -264,14 +267,15 @@ def get_delete_identifier(block, yaml_key, key_value, target_key, tw_args):
     tw = tower.Tower()
     base_method = getattr(tw, "-o json")
 
-    # Get json data for block using list method
-    block_data = base_method(block, "list", "-o", tw_args)
+    if block == "teams":
+        block_data = base_method(block, "list", "-o", tw_args)
+    else:
+        block_data = base_method(block, "list")
 
     # Get the identifier key for the block
     real_identifier = utils.find_key_value_in_dict(
         json.loads(block_data), yaml_key, key_value, target_key
     )
-
     # Return the correct identifier to use delete method on
     return real_identifier
 
@@ -281,10 +285,9 @@ def handle_overwrite(tw, block, args):
     Handler for overwrite functionality which will delete the resource
     before adding it again.
     # TODO: Remove when `--overwrite` is supported by the CLI
+    # TODO: Refactor this desperately
     """
     # Define blocks for simple overwrite with --name and --workspace
-    # TODO: Have not defined method for deleting participants, if you're
-    # overwriting teams than by default you're overwriting participants?
     generic_deletion = [
         "credentials",
         "secrets",
@@ -298,6 +301,7 @@ def handle_overwrite(tw, block, args):
         "organizations": {
             "keys": ["name"],
             "method_args": lambda tw_args: ("delete", "--name", tw_args["name"]),
+            "name_key": "orgName",
         },
         # Requires teamId to delete, not name
         "teams": {
@@ -317,15 +321,30 @@ def handle_overwrite(tw, block, args):
                 "--organization",
                 tw_args["organization"],
             ),
+            "name_key": "name",
+        },
+        "participants": {
+            "keys": ["name", "type", "workspace"],
+            "method_args": lambda tw_args: (
+                "delete",
+                "--name",
+                tw_args["name"],
+                "--type",
+                tw_args["type"],
+                "--workspace",
+                tw_args["workspace"],
+            ),
+            "name_key": "email",
         },
         # Requires workspace formatted a certain way for valid workspace name
         "workspaces": {
             "keys": ["name", "organization"],
             "method_args": lambda tw_args: (
                 "delete",
-                "--name",
-                "{}/{}".format(tw_args["organization"], tw_args["name"]),
+                "--id",
+                str(tw_args["name"]),
             ),
+            "name_key": "workspaceId",
         },
     }
 
@@ -339,16 +358,43 @@ def handle_overwrite(tw, block, args):
                 "--workspace",
                 tw_args["workspace"],
             ),
+            "name_key": "name",
         }
 
     if block in block_operations:
         operation = block_operations[block]
         keys_to_get = operation["keys"]
-        tw_args = get_values_from_cmd_args(args, keys_to_get)
-        method_args = operation["method_args"](tw_args)
 
-        method = getattr(tw, block)
-        method(*method_args)
+        # Return JSON data to check if resource exists
+        json_method = getattr(tw, "-o json")
+
+        # TODO: (EJ) refactor this, I hate it so much
+        if block == "teams":
+            tw_args = get_values_from_cmd_args(args[0], keys_to_get)
+            json_data = json_method(block, "list", "-o", tw_args["organization"])
+        elif block in generic_deletion or block == "participants":
+            tw_args = get_values_from_cmd_args(args, keys_to_get)
+            json_data = json_method(block, "list", "-w", tw_args["workspace"])
+            if "type" in tw_args and tw_args["type"] == "TEAM":
+                operation["name_key"] = "teamName"
+        elif block == "workspaces":
+            tw_args = get_values_from_cmd_args(args, keys_to_get)
+            json_data = json_method(block, "list")
+            workspaceId = find_workspace_id(
+                json_data, tw_args["organization"], tw_args["name"]
+            )
+            tw_args["name"] = workspaceId  # override workspace name with workspaceId
+        else:
+            tw_args = get_values_from_cmd_args(args, keys_to_get)
+            json_data = json_method(block, "list")
+
+        # Check if the resource exists, if true, delete it, else return
+        if utils.check_if_exists(json_data, operation["name_key"], tw_args["name"]):
+            method_args = operation["method_args"](tw_args)
+            method = getattr(tw, block)
+            method(*method_args)
+        else:
+            return
 
 
 # Other utility functions
@@ -364,3 +410,18 @@ def get_values_from_cmd_args(cmd_args, keys):
                 values[key] = arg
             key = None
     return values
+
+
+# There can be multiple workspaces in an org with the same name
+# This retrieves the workspace id for a given workspace name and org
+def find_workspace_id(json_data, organization, workspace_name):
+    json_data = json.loads(json_data)
+    if "workspaces" in json_data:
+        workspaces = json_data["workspaces"]
+        for workspace in workspaces:
+            if (
+                workspace.get("orgName") == organization
+                and workspace.get("workspaceName") == workspace_name
+            ):
+                return workspace.get("workspaceId")
+    return None
