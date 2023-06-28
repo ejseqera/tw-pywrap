@@ -65,7 +65,6 @@ class Tower:
         )
         stdout, _ = process.communicate()
         stdout = stdout.decode("utf-8").strip()
-
         # Error handling for stdout
         if stdout:
             if re.search(r"ERROR: (?!A pipeline).* already exists", stdout):
@@ -81,8 +80,9 @@ class Tower:
             elif to_json is True:
                 return json.loads(stdout)
             else:
+                logging.info(stdout)
                 return stdout
-
+            
     # Allow any 'tw' subcommand to be called as a method.
     def __getattr__(self, cmd):
         """
