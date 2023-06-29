@@ -3,9 +3,10 @@ This file contains helper functions for the library.
 Including handling methods for each block in the YAML file, and parsing
 methods for each block in the YAML file.
 """
+
 import yaml
 from tw_pywrap import utils
-
+import logging
 
 def parse_yaml_block(file_path, block_name):
     # Load the YAML file.
@@ -22,6 +23,11 @@ def parse_yaml_block(file_path, block_name):
     name_values = set()
 
     # Iterate over each item in the block.
+    # If no commands supplied just run `tw <block_name>`
+    if block is None:
+        logging.warn(f"No arguments applied to {block_name}")
+        block = [{}]  # List of empty dict
+
     for item in block:
         cmd_args = parse_block(block_name, item)
         name = find_name(cmd_args)
@@ -227,7 +233,6 @@ def handle_generic_block(tw, block, args, method_name="add"):
         method(*args)
     else:
         method(method_name, *args)
-
 
 def handle_teams(tw, args):
     cmd_args, members_cmd_args = args

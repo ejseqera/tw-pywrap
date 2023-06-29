@@ -55,6 +55,7 @@ class BlockParser:
     def handle_block(self, block, args):
         # Handles a block of commands by calling the appropriate function.
         block_handler_map = {
+            "info": lambda tw, args: helper.handle_generic_block(tw, "info", args, method_name=None),
             "teams": (helper.handle_teams),
             "participants": (helper.handle_participants),
             "compute-envs": lambda tw, args: helper.handle_generic_block(
